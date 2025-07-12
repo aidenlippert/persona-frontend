@@ -83,7 +83,7 @@ const IssueCredential: React.FC = () => {
       };
 
       const response = await issueCredential(
-        'did:persona:testnet-issuer-authority', // Issuer DID
+        state.wallet.address, // Use wallet address as creator for backend storage
         credentialId,
         formData.credentialType,
         state.currentDID.id,
@@ -94,7 +94,7 @@ const IssueCredential: React.FC = () => {
         const newCredential = {
           id: credentialId,
           type: ['VerifiableCredential', formData.credentialType],
-          issuer: 'did:persona:testnet-issuer-authority',
+          issuer: state.wallet.address,
           issuanceDate: new Date().toISOString(),
           credentialSubject: {
             id: state.currentDID.id,
@@ -235,7 +235,7 @@ const IssueCredential: React.FC = () => {
             >
               Issue Another
             </button>
-            <Link to="/proof" className="btn-primary flex-1 text-center">
+            <Link to="/generate" className="btn-primary flex-1 text-center">
               Generate Proof
             </Link>
           </div>
