@@ -62,9 +62,12 @@ const Dashboard: React.FC = () => {
 
       // Handle Credentials
       if (credentialsResponse.status === 'fulfilled') {
+        console.log('🔍 Raw credentials response:', credentialsResponse.value);
+        const credentials = credentialsResponse.value.vc_records || [];
+        console.log('🔍 Processed credentials:', credentials);
         dispatch({
           type: 'SET_CREDENTIALS',
-          payload: credentialsResponse.value.vc_records || [],
+          payload: credentials,
         });
       }
 
@@ -381,7 +384,7 @@ const Dashboard: React.FC = () => {
                 >
                   <div>
                     <div className="text-sm font-medium text-gray-900">
-                      {credential.type.join(', ')}
+                      {Array.isArray(credential.type) ? credential.type.join(', ') : credential.type || 'Unknown Type'}
                     </div>
                     <div className="text-xs text-gray-500">
                       Issued: {new Date(credential.issued_at * 1000).toLocaleDateString()}

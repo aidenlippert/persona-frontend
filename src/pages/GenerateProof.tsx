@@ -374,7 +374,7 @@ const GenerateProof: React.FC = () => {
                 <option value="">Choose a credential...</option>
                 {state.credentials.map((credential) => (
                   <option key={credential.id} value={credential.id}>
-                    {credential.type.join(', ')} - {credential.credentialSubject.name || 'Unnamed'}
+                    {Array.isArray(credential.type) ? credential.type.join(', ') : credential.type || 'Unknown Type'} - {credential.credentialSubject.name || 'Unnamed'}
                   </option>
                 ))}
               </select>

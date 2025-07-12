@@ -201,7 +201,7 @@ const IssueCredential: React.FC = () => {
               <div className="flex justify-between">
                 <span className="text-green-700">Type:</span>
                 <span className="text-green-900 font-medium">
-                  {submittedCredential.type.join(', ')}
+                  {Array.isArray(submittedCredential.type) ? submittedCredential.type.join(', ') : submittedCredential.type || 'Unknown Type'}
                 </span>
               </div>
               <div className="flex justify-between">
