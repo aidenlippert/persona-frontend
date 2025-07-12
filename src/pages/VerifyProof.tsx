@@ -10,7 +10,7 @@ import {
 } from '@heroicons/react/24/outline';
 import { useApp } from '../context/AppContext';
 import {
-  getProof,
+  listProofs,
   verifyProof,
   getTransaction,
   handleApiError,
@@ -59,7 +59,7 @@ const VerifyProof: React.FC = () => {
           const allProofsResponse = await listProofs();
           const allProofs = allProofsResponse.zk_proofs || [];
           
-          proofData = allProofs.find(proof => proof.id === searchValue);
+          proofData = allProofs.find((proof: any) => proof.id === searchValue);
           
           if (proofData) {
             // Try to verify the proof
