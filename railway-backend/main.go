@@ -119,7 +119,14 @@ func main() {
 	fmt.Printf("  - DIDs: %s/persona/did/v1beta1/did_documents\n", bindAddr)
 	
 	fmt.Printf("Starting HTTP server on %s\n", bindAddr)
-	if err := http.ListenAndServe(bindAddr, r); err != nil {
+	fmt.Printf("Server ready to accept connections\n")
+	
+	server := &http.Server{
+		Addr:    bindAddr,
+		Handler: r,
+	}
+	
+	if err := server.ListenAndServe(); err != nil {
 		log.Fatalf("Server failed to start: %v", err)
 	}
 }
