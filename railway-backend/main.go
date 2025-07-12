@@ -110,14 +110,18 @@ func main() {
 	// Railway expects the app to bind to 0.0.0.0, not localhost
 	bindAddr := "0.0.0.0:" + port
 	
-	fmt.Printf("Mock testnet daemon starting on port %s...\n", port)
+	fmt.Printf("Mock testnet daemon starting on address %s...\n", bindAddr)
 	fmt.Printf("Chain ID: %s\n", chainInfo.ChainID)
+	fmt.Printf("Port from environment: %s\n", os.Getenv("PORT"))
 	fmt.Printf("Endpoints available:\n")
-	fmt.Printf("  - Status: http://localhost:%s/status\n", port)
-	fmt.Printf("  - Health: http://localhost:%s/health\n", port)
-	fmt.Printf("  - DIDs: http://localhost:%s/persona/did/v1beta1/did_documents\n", port)
+	fmt.Printf("  - Health: %s/health\n", bindAddr)
+	fmt.Printf("  - Status: %s/status\n", bindAddr)
+	fmt.Printf("  - DIDs: %s/persona/did/v1beta1/did_documents\n", bindAddr)
 	
-	log.Fatal(http.ListenAndServe(bindAddr, r))
+	fmt.Printf("Starting HTTP server on %s\n", bindAddr)
+	if err := http.ListenAndServe(bindAddr, r); err != nil {
+		log.Fatalf("Server failed to start: %v", err)
+	}
 }
 
 // CORS middleware to allow cross-origin requests from the demo interface
