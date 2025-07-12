@@ -213,7 +213,7 @@ const IssueCredential: React.FC = () => {
               <div className="flex justify-between">
                 <span className="text-green-700">Name:</span>
                 <span className="text-green-900 font-medium">
-                  {submittedCredential.credentialSubject.name}
+                  {submittedCredential.credentialSubject?.name || 'Not specified'}
                 </span>
               </div>
               <div className="flex justify-between">

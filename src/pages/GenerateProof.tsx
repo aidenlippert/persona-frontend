@@ -68,7 +68,7 @@ const GenerateProof: React.FC = () => {
     }
 
     // Check if credential supports age verification
-    if (!credential.credentialSubject.birthYear) {
+    if (!credential.credentialSubject?.birthYear) {
       showNotification({
         type: 'error',
         title: 'Invalid Credential',
@@ -430,12 +430,12 @@ const GenerateProof: React.FC = () => {
                   if (!credential) return null;
                   
                   const currentYear = new Date().getFullYear();
-                  const userAge = currentYear - credential.credentialSubject.birthYear;
+                  const userAge = currentYear - (credential.credentialSubject?.birthYear || 0);
                   const canProve = userAge >= minAge;
                   
                   return (
                     <div className="text-sm text-blue-800 space-y-1">
-                      <div>Name: <span className="font-medium">{credential.credentialSubject.name}</span></div>
+                      <div>Name: <span className="font-medium">{credential.credentialSubject?.name || 'Not specified'}</span></div>
                       <div>Current Age: <span className="font-medium">{userAge} years old</span></div>
                       <div>
                         Can Prove Age ≥ {minAge}: 
