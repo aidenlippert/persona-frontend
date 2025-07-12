@@ -405,7 +405,7 @@ const Dashboard: React.FC = () => {
                   Issue Credential
                 </Link>
                 <Link
-                  to="/proof"
+                  to="/generate"
                   className="block w-full btn-secondary text-sm py-2 px-4 text-center"
                   style={{ textDecoration: 'none' }}
                 >
@@ -417,6 +417,20 @@ const Dashboard: React.FC = () => {
                   style={{ textDecoration: 'none' }}
                 >
                   Verify Proof
+                </Link>
+                <Link
+                  to="/show-proof"
+                  className="block w-full btn-primary text-sm py-2 px-4 text-center"
+                  style={{ textDecoration: 'none' }}
+                >
+                  Share Proof QR
+                </Link>
+                <Link
+                  to="/scan-verify"
+                  className="block w-full btn-primary text-sm py-2 px-4 text-center"
+                  style={{ textDecoration: 'none' }}
+                >
+                  Scan & Verify
                 </Link>
               </div>
             </div>

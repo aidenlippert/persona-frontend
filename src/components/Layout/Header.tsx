@@ -8,6 +8,7 @@ import {
   DocumentTextIcon,
   FingerPrintIcon,
   MagnifyingGlassIcon,
+  QrCodeIcon,
 } from '@heroicons/react/24/outline';
 import { useApp } from '../../context/AppContext';
 import { formatAddress } from '../../lib/keplr';
@@ -24,8 +25,10 @@ const Header: React.FC<HeaderProps> = ({ mobileMenuOpen, setMobileMenuOpen }) =>
   const navigation = [
     { name: 'Dashboard', href: '/dashboard', icon: ShieldCheckIcon },
     { name: 'Issue Credential', href: '/issue', icon: DocumentTextIcon },
-    { name: 'Generate Proof', href: '/proof', icon: FingerPrintIcon },
+    { name: 'Generate Proof', href: '/generate', icon: FingerPrintIcon },
     { name: 'Verify', href: '/verify', icon: MagnifyingGlassIcon },
+    { name: 'Show Proof', href: '/show-proof', icon: QrCodeIcon },
+    { name: 'Scan & Verify', href: '/scan-verify', icon: QrCodeIcon },
   ];
 
   const isActive = (path: string) => location.pathname === path;

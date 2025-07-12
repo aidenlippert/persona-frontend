@@ -6,6 +6,8 @@ import Dashboard from './pages/Dashboard';
 import IssueCredential from './pages/IssueCredential';
 import GenerateProof from './pages/GenerateProof';
 import VerifyProof from './pages/VerifyProof';
+import ShowProof from './pages/ShowProof';
+import ScanVerify from './pages/ScanVerify';
 
 function App() {
   return (
@@ -16,8 +18,10 @@ function App() {
             <Route index element={<Home />} />
             <Route path="dashboard" element={<Dashboard />} />
             <Route path="issue" element={<IssueCredential />} />
-            <Route path="proof" element={<GenerateProof />} />
+            <Route path="generate" element={<GenerateProof />} />
             <Route path="verify" element={<VerifyProof />} />
+            <Route path="show-proof" element={<ShowProof />} />
+            <Route path="scan-verify" element={<ScanVerify />} />
             <Route path="*" element={<Navigate to="/" replace />} />
           </Route>
         </Routes>
