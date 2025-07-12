@@ -14,6 +14,7 @@ import {
   verifyProof,
   getTransaction,
   handleApiError,
+  getProofsByController,
 } from '../lib/api';
 import {
   copyToClipboard,
@@ -30,7 +31,7 @@ interface VerificationResult {
 }
 
 const VerifyProof: React.FC = () => {
-  const { showNotification } = useApp();
+  const { state, showNotification } = useApp();
   const [searchType, setSearchType] = useState<'proofId' | 'txHash'>('proofId');
   const [searchValue, setSearchValue] = useState('');
   const [isVerifying, setIsVerifying] = useState(false);
@@ -55,9 +56,24 @@ const VerifyProof: React.FC = () => {
       if (searchType === 'proofId') {
         // Verify by proof ID - search across all proofs
         try {
-          // Get all proofs from all controllers to find the one with matching ID
+          // Get all proofs from global endpoint first
           const allProofsResponse = await listProofs();
-          const allProofs = allProofsResponse.zk_proofs || [];
+          let allProofs = allProofsResponse.zk_proofs || [];
+          
+          // Also try to get proofs from user's controller if available
+          if (state.wallet.isConnected && state.wallet.address) {
+            try {
+              const userProofsResponse = await getProofsByController(state.wallet.address);
+              const userProofs = userProofsResponse.zk_proofs || [];
+              // Merge user proofs with global proofs, removing duplicates
+              const existingIds = new Set(allProofs.map((p: any) => p.id));
+              const newUserProofs = userProofs.filter((p: any) => !existingIds.has(p.id));
+              allProofs = [...allProofs, ...newUserProofs];
+              console.log('🔍 Extended proof search with user proofs. Total proofs:', allProofs.length);
+            } catch (error) {
+              console.warn('Failed to get user-specific proofs:', error);
+            }
+          }
           
           // Search for proof with exact ID match or partial match
           proofData = allProofs.find((proof: any) => 
