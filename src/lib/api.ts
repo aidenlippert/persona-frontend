@@ -138,17 +138,27 @@ export const issueCredential = async (
   subject: string,
   claims: Record<string, any>
 ): Promise<TransactionResponse> => {
+  // Build the verifiable credential object that matches backend expectations
+  const credentialData = {
+    '@context': ['https://www.w3.org/2018/credentials/v1'],
+    id: credentialId,
+    type: ['VerifiableCredential', credentialType],
+    issuer: issuer,
+    issuanceDate: new Date().toISOString(),
+    credentialSubject: {
+      id: subject,
+      ...claims
+    }
+  };
+
   const txData = {
     tx: {
       body: {
         messages: [
           {
             '@type': '/persona.vc.v1.MsgIssueCredential',
-            issuer,
-            credential_id: credentialId,
-            credential_type: credentialType,
-            subject,
-            claims: JSON.stringify(claims),
+            creator: issuer,  // Backend expects 'creator' not 'issuer'
+            vc_data: JSON.stringify(credentialData),  // Backend expects 'vc_data' not separate fields
           },
         ],
         memo: '',
