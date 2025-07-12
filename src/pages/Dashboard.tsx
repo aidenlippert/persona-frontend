@@ -54,28 +54,47 @@ const Dashboard: React.FC = () => {
 
       // Handle DIDs
       if (didsResponse.status === 'fulfilled') {
-        const userDID = didsResponse.value.did_documents?.find(
+        console.log('🔍 Raw DIDs response:', didsResponse.value);
+        console.log('🔍 Looking for controller:', state.wallet.address);
+        const allDIDs = didsResponse.value.did_documents || [];
+        console.log('🔍 All DIDs:', allDIDs);
+        const userDID = allDIDs.find(
           (did) => did.controller === state.wallet.address
         );
+        console.log('🔍 Found user DID:', userDID);
         dispatch({ type: 'SET_CURRENT_DID', payload: userDID || null });
       }
 
       // Handle Credentials
       if (credentialsResponse.status === 'fulfilled') {
         console.log('🔍 Raw credentials response:', credentialsResponse.value);
-        const credentials = credentialsResponse.value.vc_records || [];
-        console.log('🔍 Processed credentials:', credentials);
+        const allCredentials = credentialsResponse.value.vc_records || [];
+        console.log('🔍 All credentials:', allCredentials);
+        // Filter credentials that belong to the current user
+        const userCredentials = allCredentials.filter(cred => 
+          cred.credentialSubject?.id === state.currentDID?.id ||
+          cred.credentialSubject?.id?.includes(state.wallet.address || '')
+        );
+        console.log('🔍 User credentials:', userCredentials);
         dispatch({
           type: 'SET_CREDENTIALS',
-          payload: credentials,
+          payload: userCredentials,
         });
       }
 
       // Handle Proofs
       if (proofsResponse.status === 'fulfilled') {
+        console.log('🔍 Raw proofs response:', proofsResponse.value);
+        const allProofs = proofsResponse.value.zk_proofs || [];
+        console.log('🔍 All proofs:', allProofs);
+        // Filter proofs that belong to the current user
+        const userProofs = allProofs.filter(proof => 
+          proof.prover === state.wallet.address
+        );
+        console.log('🔍 User proofs:', userProofs);
         dispatch({
           type: 'SET_PROOFS',
-          payload: proofsResponse.value.zk_proofs || [],
+          payload: userProofs,
         });
       }
     } catch (error) {
