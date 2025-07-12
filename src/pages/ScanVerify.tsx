@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import {
   QrCodeIcon,
@@ -47,6 +47,27 @@ const ScanVerify: React.FC = () => {
   const [isScanning, setIsScanning] = useState(false);
   const [verificationResult, setVerificationResult] = useState<VerificationResult | null>(null);
   const [isVerifying, setIsVerifying] = useState(false);
+
+  // Check for URL parameters on component mount
+  useEffect(() => {
+    const urlParams = new URLSearchParams(window.location.search);
+    const dataParam = urlParams.get('data');
+    
+    if (dataParam) {
+      try {
+        const proofData = JSON.parse(decodeURIComponent(dataParam));
+        console.log('Processing proof data from URL:', proofData);
+        verifyProofData(proofData);
+      } catch (error) {
+        console.error('Failed to parse URL proof data:', error);
+        setVerificationResult({
+          isValid: false,
+          proofData: null,
+          error: 'Invalid proof data in URL',
+        });
+      }
+    }
+  }, []);
 
   const handleScanResult = async (scanResult: any) => {
     if (!scanResult.success) {
