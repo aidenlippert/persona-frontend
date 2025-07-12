@@ -66,6 +66,16 @@ export const getDID = async (didId: string): Promise<{ did_document: DIDDocument
   return response.data;
 };
 
+export const getDIDByController = async (controller: string): Promise<DIDDocument | null> => {
+  try {
+    const response = await api.get(`/persona/did/v1beta1/did_by_controller/${encodeURIComponent(controller)}`);
+    return response.data.did_document;
+  } catch (error) {
+    console.warn('Failed to get DID by controller:', error);
+    return null;
+  }
+};
+
 export const createDID = async (
   creator: string,
   didId: string,
@@ -108,6 +118,11 @@ export const createDID = async (
 // Verifiable Credentials Operations
 export const listCredentials = async (): Promise<{ vc_records: VerifiableCredential[] }> => {
   const response = await api.get('/persona/vc/v1beta1/credentials');
+  return response.data;
+};
+
+export const getCredentialsByController = async (controller: string): Promise<{ vc_records: VerifiableCredential[] }> => {
+  const response = await api.get(`/persona/vc/v1beta1/credentials_by_controller/${encodeURIComponent(controller)}`);
   return response.data;
 };
 
@@ -201,6 +216,11 @@ export const revokeCredential = async (
 // ZK Proof Operations
 export const listProofs = async (): Promise<{ zk_proofs: ZKProof[] }> => {
   const response = await api.get('/persona/zk/v1beta1/proofs');
+  return response.data;
+};
+
+export const getProofsByController = async (controller: string): Promise<{ zk_proofs: ZKProof[] }> => {
+  const response = await api.get(`/persona/zk/v1beta1/proofs_by_controller/${encodeURIComponent(controller)}`);
   return response.data;
 };
 

@@ -202,8 +202,8 @@ const GenerateProof: React.FC = () => {
           Please connect your Keplr wallet to generate proofs.
         </p>
         <div className="mt-6">
-          <Link to="/" className="btn-primary">
-            Go to Home
+          <Link to="/dashboard" className="btn-primary">
+            Go to Dashboard
           </Link>
         </div>
       </div>

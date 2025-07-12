@@ -17,6 +17,9 @@ import {
   listCredentials,
   listProofs,
   createDID,
+  getDIDByController,
+  getCredentialsByController,
+  getProofsByController,
   handleApiError,
 } from '../lib/api';
 import {
@@ -72,7 +75,21 @@ const Dashboard: React.FC = () => {
         );
         console.log('🔍 Found user DID from API:', userDID);
         
-        // If no DID found from API, preserve the one from localStorage
+        // If no DID found from API, try direct controller lookup
+        if (!userDID && state.wallet.address) {
+          console.log('🔍 No DID from list API, trying controller lookup for:', state.wallet.address);
+          try {
+            const controllerDID = await getDIDByController(state.wallet.address);
+            if (controllerDID) {
+              console.log('🔍 Found DID via controller lookup:', controllerDID);
+              userDID = controllerDID;
+            }
+          } catch (error) {
+            console.warn('Controller DID lookup failed:', error);
+          }
+        }
+        
+        // If still no DID found from API, preserve the one from localStorage
         if (!userDID && state.currentDID) {
           console.log('🔍 No DID from API, keeping localStorage DID:', state.currentDID);
           userDID = state.currentDID;
@@ -91,11 +108,24 @@ const Dashboard: React.FC = () => {
         const allCredentials = credentialsResponse.value.vc_records || [];
         console.log('🔍 All credentials:', allCredentials);
         // Filter credentials that belong to the current user
-        const userCredentials = allCredentials.filter(cred => 
+        let userCredentials = allCredentials.filter(cred => 
           cred.credentialSubject?.id === userDID?.id ||
           cred.credentialSubject?.id?.includes(state.wallet.address || '')
         );
-        console.log('🔍 User credentials:', userCredentials);
+        
+        // If no credentials found and we have a wallet address, try controller-specific lookup
+        if (userCredentials.length === 0 && state.wallet.address) {
+          try {
+            console.log('🔍 No credentials from list API, trying controller lookup');
+            const controllerCreds = await getCredentialsByController(state.wallet.address);
+            userCredentials = controllerCreds.vc_records || [];
+            console.log('🔍 Found credentials via controller lookup:', userCredentials);
+          } catch (error) {
+            console.warn('Controller credentials lookup failed:', error);
+          }
+        }
+        
+        console.log('🔍 Final user credentials:', userCredentials);
         dispatch({
           type: 'SET_CREDENTIALS',
           payload: userCredentials,
@@ -108,10 +138,23 @@ const Dashboard: React.FC = () => {
         const allProofs = proofsResponse.value.zk_proofs || [];
         console.log('🔍 All proofs:', allProofs);
         // Filter proofs that belong to the current user
-        const userProofs = allProofs.filter(proof => 
+        let userProofs = allProofs.filter(proof => 
           proof.prover === state.wallet.address
         );
-        console.log('🔍 User proofs:', userProofs);
+        
+        // If no proofs found and we have a wallet address, try controller-specific lookup
+        if (userProofs.length === 0 && state.wallet.address) {
+          try {
+            console.log('🔍 No proofs from list API, trying controller lookup');
+            const controllerProofs = await getProofsByController(state.wallet.address);
+            userProofs = controllerProofs.zk_proofs || [];
+            console.log('🔍 Found proofs via controller lookup:', userProofs);
+          } catch (error) {
+            console.warn('Controller proofs lookup failed:', error);
+          }
+        }
+        
+        console.log('🔍 Final user proofs:', userProofs);
         dispatch({
           type: 'SET_PROOFS',
           payload: userProofs,
