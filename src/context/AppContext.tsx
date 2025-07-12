@@ -60,7 +60,11 @@ const initialWalletState: WalletState = {
 
 const initialAppState: AppState = {
   wallet: initialWalletState,
-  currentDID: loadFromStorage(STORAGE_KEYS.CURRENT_DID, null),
+  currentDID: (() => {
+    const did = loadFromStorage(STORAGE_KEYS.CURRENT_DID, null);
+    console.log('🔍 Loading DID from localStorage on app init:', did);
+    return did;
+  })(),
   credentials: loadFromStorage(STORAGE_KEYS.CREDENTIALS, []),
   proofs: loadFromStorage(STORAGE_KEYS.PROOFS, []),
   loading: false,

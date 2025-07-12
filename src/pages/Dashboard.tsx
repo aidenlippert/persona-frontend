@@ -70,8 +70,19 @@ const Dashboard: React.FC = () => {
         userDID = allDIDs.find(
           (did) => did.controller === state.wallet.address
         );
-        console.log('🔍 Found user DID:', userDID);
+        console.log('🔍 Found user DID from API:', userDID);
+        
+        // If no DID found from API, preserve the one from localStorage
+        if (!userDID && state.currentDID) {
+          console.log('🔍 No DID from API, keeping localStorage DID:', state.currentDID);
+          userDID = state.currentDID;
+        }
+        
         dispatch({ type: 'SET_CURRENT_DID', payload: userDID || null });
+      } else {
+        // If API call failed, keep the localStorage DID
+        console.log('🔍 DID API call failed, keeping localStorage DID:', state.currentDID);
+        userDID = state.currentDID;
       }
 
       // Handle Credentials - now use the userDID we just found
