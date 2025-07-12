@@ -16,6 +16,40 @@ import {
 } from '../lib/keplr';
 import { getBalance } from '../lib/api';
 
+// Local Storage Keys
+const STORAGE_KEYS = {
+  CURRENT_DID: 'persona_current_did',
+  CREDENTIALS: 'persona_credentials',
+  PROOFS: 'persona_proofs',
+} as const;
+
+// Helper functions for localStorage
+const loadFromStorage = <T,>(key: string, defaultValue: T): T => {
+  try {
+    const item = localStorage.getItem(key);
+    return item ? JSON.parse(item) : defaultValue;
+  } catch (error) {
+    console.warn(`Failed to load ${key} from localStorage:`, error);
+    return defaultValue;
+  }
+};
+
+const saveToStorage = <T,>(key: string, value: T): void => {
+  try {
+    localStorage.setItem(key, JSON.stringify(value));
+  } catch (error) {
+    console.warn(`Failed to save ${key} to localStorage:`, error);
+  }
+};
+
+const removeFromStorage = (key: string): void => {
+  try {
+    localStorage.removeItem(key);
+  } catch (error) {
+    console.warn(`Failed to remove ${key} from localStorage:`, error);
+  }
+};
+
 // Initial State
 const initialWalletState: WalletState = {
   isConnected: false,
@@ -26,9 +60,9 @@ const initialWalletState: WalletState = {
 
 const initialAppState: AppState = {
   wallet: initialWalletState,
-  currentDID: null,
-  credentials: [],
-  proofs: [],
+  currentDID: loadFromStorage(STORAGE_KEYS.CURRENT_DID, null),
+  credentials: loadFromStorage(STORAGE_KEYS.CREDENTIALS, []),
+  proofs: loadFromStorage(STORAGE_KEYS.PROOFS, []),
   loading: false,
   error: null,
 };
@@ -70,6 +104,10 @@ const appReducer = (state: AppState, action: AppAction): AppState => {
       };
 
     case 'DISCONNECT_WALLET':
+      // Clear localStorage when disconnecting
+      removeFromStorage(STORAGE_KEYS.CURRENT_DID);
+      removeFromStorage(STORAGE_KEYS.CREDENTIALS);
+      removeFromStorage(STORAGE_KEYS.PROOFS);
       return {
         ...state,
         wallet: initialWalletState,
@@ -88,40 +126,51 @@ const appReducer = (state: AppState, action: AppAction): AppState => {
       };
 
     case 'SET_CURRENT_DID':
+      saveToStorage(STORAGE_KEYS.CURRENT_DID, action.payload);
       return { ...state, currentDID: action.payload };
 
     case 'SET_CREDENTIALS':
+      saveToStorage(STORAGE_KEYS.CREDENTIALS, action.payload);
       return { ...state, credentials: action.payload };
 
     case 'ADD_CREDENTIAL':
+      const newCredentials = [...state.credentials, action.payload];
+      saveToStorage(STORAGE_KEYS.CREDENTIALS, newCredentials);
       return {
         ...state,
-        credentials: [...state.credentials, action.payload],
+        credentials: newCredentials,
       };
 
     case 'UPDATE_CREDENTIAL':
+      const updatedCredentials = state.credentials.map((cred) =>
+        cred.id === action.payload.id ? action.payload : cred
+      );
+      saveToStorage(STORAGE_KEYS.CREDENTIALS, updatedCredentials);
       return {
         ...state,
-        credentials: state.credentials.map((cred) =>
-          cred.id === action.payload.id ? action.payload : cred
-        ),
+        credentials: updatedCredentials,
       };
 
     case 'SET_PROOFS':
+      saveToStorage(STORAGE_KEYS.PROOFS, action.payload);
       return { ...state, proofs: action.payload };
 
     case 'ADD_PROOF':
+      const newProofs = [...state.proofs, action.payload];
+      saveToStorage(STORAGE_KEYS.PROOFS, newProofs);
       return {
         ...state,
-        proofs: [...state.proofs, action.payload],
+        proofs: newProofs,
       };
 
     case 'UPDATE_PROOF':
+      const updatedProofs = state.proofs.map((proof) =>
+        proof.id === action.payload.id ? action.payload : proof
+      );
+      saveToStorage(STORAGE_KEYS.PROOFS, updatedProofs);
       return {
         ...state,
-        proofs: state.proofs.map((proof) =>
-          proof.id === action.payload.id ? action.payload : proof
-        ),
+        proofs: updatedProofs,
       };
 
     default:
