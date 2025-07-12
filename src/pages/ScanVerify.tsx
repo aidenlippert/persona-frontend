@@ -69,7 +69,7 @@ const ScanVerify: React.FC = () => {
     }
   }, []);
 
-  const handleScanResult = async (scanResult: any) => {
+  const handleScanResult = async (scanResult: { success: boolean; data?: unknown; error?: string; rawData?: string }) => {
     if (!scanResult.success) {
       setVerificationResult({
         isValid: false,
@@ -82,8 +82,20 @@ const ScanVerify: React.FC = () => {
     setIsVerifying(true);
     
     try {
-      await verifyProofData(scanResult.data);
-    } catch (error) {
+      // Handle different QR code formats
+      let proofData = scanResult.data;
+      
+      // If it's a string that looks like a URL, try to extract data from it
+      if (typeof scanResult.rawData === 'string' && scanResult.rawData.includes('/scan-verify?data=')) {
+        const urlParams = new URLSearchParams(scanResult.rawData.split('?')[1]);
+        const dataParam = urlParams.get('data');
+        if (dataParam) {
+          proofData = JSON.parse(decodeURIComponent(dataParam));
+        }
+      }
+      
+      await verifyProofData(proofData);
+    } catch {
       setVerificationResult({
         isValid: false,
         proofData: null,
@@ -95,7 +107,7 @@ const ScanVerify: React.FC = () => {
     }
   };
 
-  const verifyProofData = async (data: any) => {
+  const verifyProofData = async (data: unknown) => {
     // Add delay to simulate verification process
     await new Promise(resolve => setTimeout(resolve, 1500));
 
@@ -105,11 +117,13 @@ const ScanVerify: React.FC = () => {
         throw new Error('Invalid data format');
       }
 
-      if (data.type !== 'zk-proof') {
+      const typedData = data as { type?: string; proof?: { id?: string } };
+      
+      if (typedData.type !== 'zk-proof') {
         throw new Error('Not a valid ZK proof QR code');
       }
 
-      if (!data.proof || !data.proof.id) {
+      if (!typedData.proof || !typedData.proof.id) {
         throw new Error('Missing proof data');
       }
 

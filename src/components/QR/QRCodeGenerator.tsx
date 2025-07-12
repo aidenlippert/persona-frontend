@@ -7,7 +7,7 @@ import {
 } from '@heroicons/react/24/outline';
 
 interface QRCodeGeneratorProps {
-  data: object;
+  data: string | object;
   title?: string;
   subtitle?: string;
   size?: number;
@@ -35,10 +35,10 @@ export const QRCodeGenerator: React.FC<QRCodeGeneratorProps> = ({
     
     try {
       setError('');
-      const jsonString = JSON.stringify(data);
+      const qrString = typeof data === 'string' ? data : JSON.stringify(data);
       
       // Generate QR code on canvas
-      await QRCode.toCanvas(canvasRef.current, jsonString, {
+      await QRCode.toCanvas(canvasRef.current, qrString, {
         width: size,
         margin: 2,
         color: {
@@ -49,7 +49,7 @@ export const QRCodeGenerator: React.FC<QRCodeGeneratorProps> = ({
       });
 
       // Also get data URL for download
-      const dataUrl = await QRCode.toDataURL(jsonString, {
+      const dataUrl = await QRCode.toDataURL(qrString, {
         width: size,
         margin: 2,
         color: {
@@ -68,8 +68,8 @@ export const QRCodeGenerator: React.FC<QRCodeGeneratorProps> = ({
 
   const copyToClipboard = async () => {
     try {
-      const jsonString = JSON.stringify(data, null, 2);
-      await navigator.clipboard.writeText(jsonString);
+      const copyString = typeof data === 'string' ? data : JSON.stringify(data, null, 2);
+      await navigator.clipboard.writeText(copyString);
       setCopied(true);
       setTimeout(() => setCopied(false), 2000);
     } catch (err) {

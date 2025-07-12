@@ -212,11 +212,7 @@ const ShowProof: React.FC = () => {
           {/* QR Code */}
           <div className="bg-white rounded-lg border border-gray-200 p-6">
             <QRCodeGenerator
-              data={{
-                url: `${window.location.origin}/scan-verify?data=${encodeURIComponent(JSON.stringify(sharedData))}`,
-                verification_type: 'verification-link',
-                ...sharedData
-              }}
+              data={JSON.stringify(sharedData)}
               title="ZK Proof QR Code"
               subtitle="Others can scan this to verify your proof"
               size={280}

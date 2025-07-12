@@ -11,7 +11,7 @@ import {
 
 interface QRScanResult {
   success: boolean;
-  data?: any;
+  data?: unknown;
   error?: string;
   rawData?: string;
 }
@@ -63,7 +63,18 @@ export const QRCodeScanner: React.FC<QRCodeScannerProps> = ({
           highlightScanRegion: true,
           highlightCodeOutline: true,
           preferredCamera: 'environment', // Back camera on mobile
-          maxScansPerSecond: 2,
+          maxScansPerSecond: 1, // Slower scanning for better mobile compatibility
+          calculateScanRegion: (video) => {
+            // Better scan region calculation for mobile
+            const smallestDimension = Math.min(video.videoWidth, video.videoHeight);
+            const scanRegionSize = Math.round(0.6 * smallestDimension);
+            return {
+              x: Math.round((video.videoWidth - scanRegionSize) / 2),
+              y: Math.round((video.videoHeight - scanRegionSize) / 2),
+              width: scanRegionSize,
+              height: scanRegionSize,
+            };
+          },
         }
       );
 
@@ -78,8 +89,26 @@ export const QRCodeScanner: React.FC<QRCodeScannerProps> = ({
     console.log('🔍 Scanned QR code:', rawData);
     
     try {
-      // Try to parse as JSON
-      const parsedData = JSON.parse(rawData);
+      let parsedData;
+      
+      // Handle different QR code formats
+      if (rawData.startsWith('http') || rawData.includes('/scan-verify?data=')) {
+        // URL format - extract data parameter
+        try {
+          const url = new URL(rawData);
+          const dataParam = url.searchParams.get('data');
+          if (dataParam) {
+            parsedData = JSON.parse(decodeURIComponent(dataParam));
+          } else {
+            throw new Error('No data parameter in URL');
+          }
+        } catch {
+          throw new Error('Invalid URL format in QR code');
+        }
+      } else {
+        // Direct JSON format
+        parsedData = JSON.parse(rawData);
+      }
       
       // Validate against expected schema if provided
       if (expectedDataSchema.length > 0) {
@@ -105,11 +134,11 @@ export const QRCodeScanner: React.FC<QRCodeScannerProps> = ({
       setLastResult(result);
       onScan(result);
 
-    } catch (parseError) {
-      // Not valid JSON
+    } catch {
+      // Not valid format
       const result: QRScanResult = {
         success: false,
-        error: 'QR code does not contain valid JSON data',
+        error: 'QR code does not contain valid proof data',
         rawData,
       };
       setLastResult(result);

@@ -59,35 +59,54 @@ const VerifyProof: React.FC = () => {
           const allProofsResponse = await listProofs();
           const allProofs = allProofsResponse.zk_proofs || [];
           
-          proofData = allProofs.find((proof: any) => proof.id === searchValue);
+          // Search for proof with exact ID match or partial match
+          proofData = allProofs.find((proof: any) => 
+            proof.id === searchValue || 
+            proof.id.includes(searchValue) ||
+            searchValue.includes(proof.id)
+          );
+          
+          if (!proofData && allProofs.length > 0) {
+            // If still not found, try case-insensitive search
+            proofData = allProofs.find((proof: any) => 
+              proof.id.toLowerCase() === searchValue.toLowerCase() ||
+              proof.id.toLowerCase().includes(searchValue.toLowerCase()) ||
+              searchValue.toLowerCase().includes(proof.id.toLowerCase())
+            );
+          }
           
           if (proofData) {
+            console.log('Found proof:', proofData);
+            
             // Try to verify the proof
             try {
-              const verificationResponse = await verifyProof(searchValue);
+              const verificationResponse = await verifyProof(proofData.id);
               setVerificationResult({
                 isValid: verificationResponse.is_valid,
                 proof: proofData,
                 metadata: JSON.parse(proofData.metadata || '{}'),
               });
             } catch (verifyError) {
-              // Verification endpoint might not exist, so mock successful verification
+              console.warn('Verification endpoint failed, using stored status:', verifyError);
+              // Verification endpoint might not exist, so use stored verification status
               setVerificationResult({
-                isValid: proofData.is_verified || true, // Use proof's stored verification status
+                isValid: proofData.is_verified !== false, // Default to true unless explicitly false
                 proof: proofData,
                 metadata: JSON.parse(proofData.metadata || '{}'),
               });
             }
           } else {
-            throw new Error('Proof not found');
+            console.log('Available proofs:', allProofs.map(p => p.id));
+            throw new Error(`Proof with ID "${searchValue}" not found. Available proofs: ${allProofs.length}`);
           }
         } catch (error) {
-          // If proof not found, create a mock verification result
+          console.error('Proof verification error:', error);
+          // If proof not found, create a detailed error
           setVerificationResult({
             isValid: false,
             proof: null,
             metadata: null,
-            error: 'Proof not found or verification failed',
+            error: error instanceof Error ? error.message : 'Proof not found or verification failed',
           });
         }
       } else {
