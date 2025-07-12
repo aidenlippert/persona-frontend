@@ -104,7 +104,7 @@ func main() {
 	
 	port := os.Getenv("PORT")
 	if port == "" {
-		port = "1317"
+		port = "8080"  // Railway default port
 	}
 	
 	// Railway expects the app to bind to 0.0.0.0, not localhost
