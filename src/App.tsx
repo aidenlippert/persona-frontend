@@ -3,6 +3,7 @@ import { AppProvider } from './context/AppContext';
 import Layout from './components/Layout/Layout';
 import Home from './pages/Home';
 import Dashboard from './pages/Dashboard';
+import Credentials from './pages/Credentials';
 import IssueCredential from './pages/IssueCredential';
 import GenerateProof from './pages/GenerateProof';
 import VerifyProof from './pages/VerifyProof';
@@ -17,6 +18,7 @@ function App() {
           <Route path="/" element={<Layout />}>
             <Route index element={<Home />} />
             <Route path="dashboard" element={<Dashboard />} />
+            <Route path="credentials" element={<Credentials />} />
             <Route path="issue" element={<IssueCredential />} />
             <Route path="generate" element={<GenerateProof />} />
             <Route path="verify" element={<VerifyProof />} />

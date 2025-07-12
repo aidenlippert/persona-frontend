@@ -490,7 +490,7 @@ const Dashboard: React.FC = () => {
               <DocumentTextIcon className="h-5 w-5" />
               <span>Recent Credentials</span>
             </h3>
-            <Link to="/issue" className="text-primary-600 hover:text-primary-800 text-sm">
+            <Link to="/credentials" className="text-primary-600 hover:text-primary-800 text-sm">
               View all
             </Link>
           </div>
@@ -504,10 +504,17 @@ const Dashboard: React.FC = () => {
                 >
                   <div>
                     <div className="text-sm font-medium text-gray-900">
-                      {Array.isArray(credential.type) ? credential.type.join(', ') : credential.type || 'Unknown Type'}
+                      {Array.isArray(credential.type) 
+                        ? credential.type.filter(t => t !== 'VerifiableCredential').join(', ') || 'Verifiable Credential'
+                        : credential.type || 'Unknown Type'}
                     </div>
                     <div className="text-xs text-gray-500">
-                      Issued: {new Date(credential.issued_at * 1000).toLocaleDateString()}
+                      Issued: {credential.issued_at 
+                        ? new Date(credential.issued_at * 1000).toLocaleDateString()
+                        : credential.issuanceDate 
+                          ? new Date(credential.issuanceDate).toLocaleDateString()
+                          : 'Unknown date'
+                      }
                     </div>
                   </div>
                   <div className="flex items-center space-x-2">

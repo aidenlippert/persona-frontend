@@ -8,8 +8,8 @@ import type {
 } from '../types';
 
 // API Configuration
-const API_BASE_URL = 'http://localhost:1317';
-const FAUCET_BASE_URL = 'http://localhost:8080';
+const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || 'http://localhost:1317';
+const FAUCET_BASE_URL = import.meta.env.VITE_FAUCET_BASE_URL || 'http://localhost:8080';
 
 // Create axios instance with default config
 const api = axios.create({
