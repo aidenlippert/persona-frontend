@@ -42,6 +42,13 @@ const Dashboard: React.FC = () => {
     }
   }, [state.wallet.isConnected]);
 
+  // Close create DID modal if a DID is created
+  useEffect(() => {
+    if (state.currentDID && showCreateDID) {
+      setShowCreateDID(false);
+    }
+  }, [state.currentDID]);
+
   const loadDashboardData = async () => {
     setLoading(true);
     try {
@@ -52,27 +59,29 @@ const Dashboard: React.FC = () => {
         listProofs(),
       ]);
 
-      // Handle DIDs
+      let userDID = null;
+
+      // Handle DIDs first to get the current DID
       if (didsResponse.status === 'fulfilled') {
         console.log('🔍 Raw DIDs response:', didsResponse.value);
         console.log('🔍 Looking for controller:', state.wallet.address);
         const allDIDs = didsResponse.value.did_documents || [];
         console.log('🔍 All DIDs:', allDIDs);
-        const userDID = allDIDs.find(
+        userDID = allDIDs.find(
           (did) => did.controller === state.wallet.address
         );
         console.log('🔍 Found user DID:', userDID);
         dispatch({ type: 'SET_CURRENT_DID', payload: userDID || null });
       }
 
-      // Handle Credentials
+      // Handle Credentials - now use the userDID we just found
       if (credentialsResponse.status === 'fulfilled') {
         console.log('🔍 Raw credentials response:', credentialsResponse.value);
         const allCredentials = credentialsResponse.value.vc_records || [];
         console.log('🔍 All credentials:', allCredentials);
         // Filter credentials that belong to the current user
         const userCredentials = allCredentials.filter(cred => 
-          cred.credentialSubject?.id === state.currentDID?.id ||
+          cred.credentialSubject?.id === userDID?.id ||
           cred.credentialSubject?.id?.includes(state.wallet.address || '')
         );
         console.log('🔍 User credentials:', userCredentials);
@@ -217,12 +226,18 @@ const Dashboard: React.FC = () => {
             Manage your decentralized identity, credentials, and proofs
           </p>
         </div>
-        <div className="mt-4 flex md:ml-4 md:mt-0">
-          <Link to="/issue" className="btn-primary flex items-center space-x-2">
-            <PlusIcon className="h-4 w-4" />
-            <span>Issue Credential</span>
-          </Link>
-        </div>
+        {state.currentDID && (
+          <div className="mt-4 flex md:ml-4 md:mt-0 space-x-3">
+            <Link to="/issue" className="btn-primary flex items-center space-x-2">
+              <PlusIcon className="h-4 w-4" />
+              <span>Issue Credential</span>
+            </Link>
+            <Link to="/generate" className="btn-secondary flex items-center space-x-2">
+              <FingerPrintIcon className="h-4 w-4" />
+              <span>Generate Proof</span>
+            </Link>
+          </div>
+        )}
       </div>
 
       {loading ? (
@@ -300,8 +315,26 @@ const Dashboard: React.FC = () => {
                     </div>
                   </div>
 
-                  <div className="text-sm text-gray-500">
-                    Created: {new Date(state.currentDID.created_at).toLocaleDateString()}
+                  <div className="flex items-center justify-between">
+                    <div className="text-sm text-gray-500">
+                      Created: {new Date(state.currentDID.created_at).toLocaleDateString()}
+                    </div>
+                    <div className="flex space-x-2">
+                      <Link 
+                        to="/issue" 
+                        className="btn-primary text-sm py-2 px-3 flex items-center space-x-1"
+                      >
+                        <PlusIcon className="h-3 w-3" />
+                        <span>Issue Credential</span>
+                      </Link>
+                      <Link 
+                        to="/generate" 
+                        className="btn-secondary text-sm py-2 px-3 flex items-center space-x-1"
+                      >
+                        <FingerPrintIcon className="h-3 w-3" />
+                        <span>Generate Proof</span>
+                      </Link>
+                    </div>
                   </div>
                 </div>
               ) : (
@@ -483,42 +516,66 @@ const Dashboard: React.FC = () => {
       <Modal
         isOpen={showCreateDID}
         onClose={() => setShowCreateDID(false)}
-        title="Create Decentralized Identity"
+        title={state.currentDID ? "DID Already Exists" : "Create Decentralized Identity"}
       >
         <div className="space-y-4">
-          <p className="text-sm text-gray-600">
-            Create your decentralized identity (DID) on the Persona Chain. This will be your
-            unique identifier on the blockchain.
-          </p>
-          
-          <div className="bg-blue-50 rounded-lg p-4">
-            <h4 className="text-sm font-medium text-blue-900 mb-2">What is a DID?</h4>
-            <p className="text-sm text-blue-800">
-              A Decentralized Identifier (DID) is a unique, persistent identifier that you control.
-              It enables verifiable, self-sovereign digital identity without relying on centralized authorities.
-            </p>
-          </div>
+          {state.currentDID ? (
+            <>
+              <div className="bg-green-50 rounded-lg p-4">
+                <h4 className="text-sm font-medium text-green-900 mb-2">You already have a DID!</h4>
+                <p className="text-sm text-green-800">
+                  Your decentralized identity is active and ready to use.
+                </p>
+                <div className="mt-3 p-2 bg-green-100 rounded text-xs font-mono text-green-900 break-all">
+                  {state.currentDID.id}
+                </div>
+              </div>
+              <div className="flex space-x-3 pt-4">
+                <button
+                  onClick={() => setShowCreateDID(false)}
+                  className="btn-primary flex-1"
+                >
+                  Continue to Dashboard
+                </button>
+              </div>
+            </>
+          ) : (
+            <>
+              <p className="text-sm text-gray-600">
+                Create your decentralized identity (DID) on the Persona Chain. This will be your
+                unique identifier on the blockchain.
+              </p>
+              
+              <div className="bg-blue-50 rounded-lg p-4">
+                <h4 className="text-sm font-medium text-blue-900 mb-2">What is a DID?</h4>
+                <p className="text-sm text-blue-800">
+                  A Decentralized Identifier (DID) is a unique, persistent identifier that you control.
+                  It enables verifiable, self-sovereign digital identity without relying on centralized authorities.
+                </p>
+              </div>
 
-          <div className="flex space-x-3 pt-4">
-            <button
-              onClick={() => setShowCreateDID(false)}
-              className="btn-secondary flex-1"
-            >
-              Cancel
-            </button>
-            <button
-              onClick={handleCreateDID}
-              disabled={creatingDID}
-              className="btn-primary flex-1 flex items-center justify-center space-x-2"
-            >
-              {creatingDID ? (
-                <LoadingSpinner size="sm" color="white" />
-              ) : (
-                <PlusIcon className="h-4 w-4" />
-              )}
-              <span>{creatingDID ? 'Creating...' : 'Create DID'}</span>
-            </button>
-          </div>
+              <div className="flex space-x-3 pt-4">
+                <button
+                  onClick={() => setShowCreateDID(false)}
+                  className="btn-secondary flex-1"
+                >
+                  Cancel
+                </button>
+                <button
+                  onClick={handleCreateDID}
+                  disabled={creatingDID}
+                  className="btn-primary flex-1 flex items-center justify-center space-x-2"
+                >
+                  {creatingDID ? (
+                    <LoadingSpinner size="sm" color="white" />
+                  ) : (
+                    <PlusIcon className="h-4 w-4" />
+                  )}
+                  <span>{creatingDID ? 'Creating...' : 'Create DID'}</span>
+                </button>
+              </div>
+            </>
+          )}
         </div>
       </Modal>
     </div>
