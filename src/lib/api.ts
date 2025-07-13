@@ -9,7 +9,7 @@ import type {
 
 // API Configuration
 const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || 'http://localhost:1317';
-const FAUCET_BASE_URL = import.meta.env.VITE_FAUCET_BASE_URL || 'http://localhost:8080';
+const FAUCET_BASE_URL = import.meta.env.VITE_FAUCET_BASE_URL || 'http://your-railway-app.up.railway.app';
 
 // Create axios instance with default config
 const api = axios.create({
