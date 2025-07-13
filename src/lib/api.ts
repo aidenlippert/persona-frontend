@@ -7,9 +7,10 @@ import type {
   TransactionResponse,
 } from '../types';
 
-// API Configuration
+// API Configuration  
+// Set VITE_API_BASE_URL environment variable in Vercel to your Railway backend URL
 const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || 'http://localhost:8080';
-const FAUCET_BASE_URL = import.meta.env.VITE_FAUCET_BASE_URL || 'http://localhost:8080';
+const FAUCET_BASE_URL = import.meta.env.VITE_FAUCET_BASE_URL || API_BASE_URL;
 
 // Create axios instance with default config
 const api = axios.create({
