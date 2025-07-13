@@ -16,9 +16,6 @@ import {
 } from '../lib/keplr';
 import { 
   getBalance, 
-  listDIDs,
-  listCredentials, 
-  listProofs,
   getDIDByController,
   getCredentialsByController,
   getProofsByController 
@@ -255,67 +252,34 @@ export const AppProvider: React.FC<AppProviderProps> = ({ children }) => {
     try {
       console.log('🔄 Loading blockchain data for wallet:', walletAddress);
       
-      // Load DIDs, credentials, and proofs in parallel
-      const [didsResponse, credentialsResponse, proofsResponse] = await Promise.allSettled([
-        listDIDs(),
-        listCredentials(),
-        listProofs(),
+      // First, try to find DID linked to this specific wallet address
+      const didDoc = await getDIDByController(walletAddress);
+      console.log('📍 DID lookup result for controller:', walletAddress, didDoc);
+      
+      if (didDoc && didDoc.id) {
+        console.log('✅ Found existing DID for wallet:', didDoc);
+        dispatch({ type: 'SET_CURRENT_DID', payload: didDoc });
+        saveToStorage(STORAGE_KEYS.CURRENT_DID, didDoc);
+      } else {
+        console.log('❌ No DID found for wallet, will need to create one');
+        dispatch({ type: 'SET_CURRENT_DID', payload: null });
+        localStorage.removeItem(STORAGE_KEYS.CURRENT_DID);
+      }
+      
+      // Load credentials and proofs for this specific controller
+      const [credentialsResponse, proofsResponse] = await Promise.allSettled([
+        getCredentialsByController(walletAddress),
+        getProofsByController(walletAddress),
       ]);
 
-      let userDID = null;
       let userCredentials: any[] = [];
       let userProofs: any[] = [];
 
-      // Handle DIDs
-      if (didsResponse.status === 'fulfilled') {
-        console.log('🔍 Raw DIDs response:', didsResponse.value);
-        const allDIDs = didsResponse.value.did_documents || [];
-        console.log('🔍 All DIDs:', allDIDs);
-        userDID = allDIDs.find((did: any) => did.controller === walletAddress);
-        console.log('🔍 Found user DID from API:', userDID);
-        
-        // If no DID found from global list, try controller-specific lookup
-        if (!userDID) {
-          console.log('🔍 No DID from list API, trying controller lookup for:', walletAddress);
-          try {
-            const controllerDID = await getDIDByController(walletAddress);
-            if (controllerDID) {
-              console.log('🔍 Found DID via controller lookup:', controllerDID);
-              userDID = controllerDID;
-            }
-          } catch (error) {
-            console.warn('Controller DID lookup failed:', error);
-          }
-        }
-        
-        dispatch({ type: 'SET_CURRENT_DID', payload: userDID || null });
-      } else {
-        console.warn('Failed to load DIDs:', didsResponse.reason);
-      }
-
       // Handle Credentials
       if (credentialsResponse.status === 'fulfilled') {
-        console.log('🔍 Raw credentials response:', credentialsResponse.value);
-        const allCredentials = credentialsResponse.value.vc_records || [];
-        console.log('🔍 All credentials:', allCredentials);
-        userCredentials = allCredentials.filter((cred: any) => 
-          cred.issuer === walletAddress || 
-          cred.credentialSubject?.id === userDID?.id
-        );
-        console.log('🔍 Final user credentials:', userCredentials);
-        
-        // If no credentials from global list, try controller-specific lookup
-        if (userCredentials.length === 0) {
-          console.log('🔍 No credentials from list API, trying controller lookup');
-          try {
-            const controllerCredentials = await getCredentialsByController(walletAddress);
-            userCredentials = controllerCredentials.vc_records || [];
-            console.log('🔍 Found credentials via controller lookup:', userCredentials);
-          } catch (error) {
-            console.warn('Controller credentials lookup failed:', error);
-          }
-        }
-        
+        console.log('🔍 Credentials response for controller:', credentialsResponse.value);
+        userCredentials = credentialsResponse.value.vc_records || [];
+        console.log('✅ Found', userCredentials.length, 'credentials for wallet');
         dispatch({ type: 'SET_CREDENTIALS', payload: userCredentials });
       } else {
         console.warn('Failed to load credentials:', credentialsResponse.reason);
@@ -323,31 +287,16 @@ export const AppProvider: React.FC<AppProviderProps> = ({ children }) => {
 
       // Handle Proofs
       if (proofsResponse.status === 'fulfilled') {
-        console.log('🔍 Raw proofs response:', proofsResponse.value);
-        const allProofs = proofsResponse.value.zk_proofs || [];
-        console.log('🔍 All proofs:', allProofs);
-        userProofs = allProofs.filter((proof: any) => proof.prover === walletAddress);
-        console.log('🔍 Final user proofs:', userProofs);
-        
-        // If no proofs from global list, try controller-specific lookup
-        if (userProofs.length === 0) {
-          console.log('🔍 No proofs from list API, trying controller lookup');
-          try {
-            const controllerProofs = await getProofsByController(walletAddress);
-            userProofs = controllerProofs.zk_proofs || [];
-            console.log('🔍 Found proofs via controller lookup:', userProofs);
-          } catch (error) {
-            console.warn('Controller proofs lookup failed:', error);
-          }
-        }
-        
+        console.log('🔍 Proofs response for controller:', proofsResponse.value);
+        userProofs = proofsResponse.value.zk_proofs || [];
+        console.log('✅ Found', userProofs.length, 'proofs for wallet');
         dispatch({ type: 'SET_PROOFS', payload: userProofs });
       } else {
         console.warn('Failed to load proofs:', proofsResponse.reason);
       }
 
       console.log('✅ Blockchain data loaded successfully');
-      console.log('📊 Summary: DID:', !!userDID, 'Credentials:', userCredentials.length, 'Proofs:', userProofs.length);
+      console.log('📊 Summary: Credentials:', userCredentials.length, 'Proofs:', userProofs.length);
       
     } catch (error) {
       console.error('❌ Failed to load blockchain data:', error);
