@@ -99,6 +99,10 @@ func main() {
 	r.HandleFunc("/persona/vc/v1beta1/credentials", handleListVCs).Methods("GET", "OPTIONS")
 	r.HandleFunc("/persona/vc/v1beta1/credentials_by_controller/{controller}", handleGetCredentialsByController).Methods("GET", "OPTIONS")
 	
+	// New API routes for template system
+	r.HandleFunc("/api/getRequirements", handleGetRequirements).Methods("POST", "OPTIONS")
+	r.HandleFunc("/api/getVc", handleGetVc).Methods("GET", "OPTIONS")
+	
 	// Health check
 	r.HandleFunc("/health", handleHealth).Methods("GET")
 	
@@ -555,6 +559,172 @@ func handleHealth(w http.ResponseWriter, r *http.Request) {
 		"timestamp": time.Now().Unix(),
 	}
 	
+	w.Header().Set("Content-Type", "application/json")
+	json.NewEncoder(w).Encode(response)
+}
+
+// Handler for /api/getRequirements
+func handleGetRequirements(w http.ResponseWriter, r *http.Request) {
+	// Parse request body
+	body, err := io.ReadAll(r.Body)
+	if err != nil {
+		http.Error(w, "Failed to read request body", http.StatusBadRequest)
+		return
+	}
+
+	var reqData map[string]interface{}
+	if err := json.Unmarshal(body, &reqData); err != nil {
+		http.Error(w, "Invalid JSON format", http.StatusBadRequest)
+		return
+	}
+
+	did, didOk := reqData["did"].(string)
+	useCase, useCaseOk := reqData["useCase"].(string)
+
+	if !didOk || !useCaseOk {
+		http.Error(w, "Missing required fields: did, useCase", http.StatusBadRequest)
+		return
+	}
+
+	log.Printf("Getting requirements for DID: %s, UseCase: %s", did, useCase)
+
+	// Define use case requirements mapping
+	useCaseRequirements := map[string][]string{
+		"store":   {"proof-of-age"},
+		"bar":     {"proof-of-age"},
+		"hotel":   {"proof-of-age", "location-proof"},
+		"doctor":  {"proof-of-age", "health-credential"},
+		"bank":    {"proof-of-age", "employment-verification", "financial-status"},
+		"rental":  {"employment-verification", "financial-status", "location-proof"},
+		"employer": {"education-credential", "employment-verification"},
+		"travel":  {"health-credential", "financial-status", "location-proof"},
+		"graduate_school": {"education-credential"},
+		"investment": {"financial-status", "employment-verification"},
+	}
+
+	requirements, exists := useCaseRequirements[useCase]
+	if !exists {
+		// Default requirements if use case not found
+		requirements = []string{"proof-of-age"}
+	}
+
+	response := map[string]interface{}{
+		"requirements": requirements,
+		"did":         did,
+		"useCase":     useCase,
+		"timestamp":   time.Now().Unix(),
+	}
+
+	w.Header().Set("Content-Type", "application/json")
+	json.NewEncoder(w).Encode(response)
+}
+
+// Handler for /api/getVc
+func handleGetVc(w http.ResponseWriter, r *http.Request) {
+	// Parse query parameters
+	did := r.URL.Query().Get("did")
+	templateId := r.URL.Query().Get("templateId")
+
+	if did == "" || templateId == "" {
+		http.Error(w, "Missing required query parameters: did, templateId", http.StatusBadRequest)
+		return
+	}
+
+	log.Printf("Getting VC for DID: %s, TemplateID: %s", did, templateId)
+
+	// Look up controller from DID
+	var controller string
+	for ctrl, didId := range walletToDID {
+		if didId == did {
+			controller = ctrl
+			break
+		}
+	}
+
+	if controller == "" {
+		// Return 404 if DID not found
+		response := map[string]interface{}{
+			"error": "DID not found",
+			"did":   did,
+		}
+		w.Header().Set("Content-Type", "application/json")
+		w.WriteHeader(http.StatusNotFound)
+		json.NewEncoder(w).Encode(response)
+		return
+	}
+
+	// Look up credentials for this controller
+	credentials, exists := credentialsByController[controller]
+	if !exists || len(credentials) == 0 {
+		response := map[string]interface{}{
+			"error": "No credentials found for this DID",
+			"did":   did,
+		}
+		w.Header().Set("Content-Type", "application/json")
+		w.WriteHeader(http.StatusNotFound)
+		json.NewEncoder(w).Encode(response)
+		return
+	}
+
+	// Find credential matching the template
+	var matchingCredential map[string]interface{}
+	for _, cred := range credentials {
+		// Check if credential matches the template ID
+		if credSubject, ok := cred["credentialSubject"].(map[string]interface{}); ok {
+			if credTemplateId, ok := credSubject["templateId"].(string); ok && credTemplateId == templateId {
+				matchingCredential = cred
+				break
+			}
+		}
+		// Fallback: check credential type
+		if credType, ok := cred["credentialSubject"].(map[string]interface{}); ok {
+			if credTypeStr, ok := credType["credentialType"].(string); ok && credTypeStr == templateId {
+				matchingCredential = cred
+				break
+			}
+		}
+	}
+
+	if matchingCredential == nil {
+		response := map[string]interface{}{
+			"error": "Credential not found for the specified template",
+			"did":   did,
+			"templateId": templateId,
+		}
+		w.Header().Set("Content-Type", "application/json")
+		w.WriteHeader(http.StatusNotFound)
+		json.NewEncoder(w).Encode(response)
+		return
+	}
+
+	// Create mock proof data
+	proofData := map[string]interface{}{
+		"type":       "ZKProof",
+		"created":    time.Now().Format(time.RFC3339),
+		"verified":   true,
+		"templateId": templateId,
+	}
+
+	publicInputs := map[string]interface{}{
+		"templateId": templateId,
+		"did":       did,
+		"timestamp": time.Now().Unix(),
+	}
+
+	metadata := map[string]interface{}{
+		"credentialId": matchingCredential["id"],
+		"issuanceDate": matchingCredential["issuanceDate"],
+		"templateId":   templateId,
+	}
+
+	response := map[string]interface{}{
+		"proof":        proofData,
+		"publicInputs": publicInputs,
+		"metadata":     metadata,
+		"credential":   matchingCredential,
+	}
+
+	log.Printf("Found credential for DID %s, TemplateID %s", did, templateId)
 	w.Header().Set("Content-Type", "application/json")
 	json.NewEncoder(w).Encode(response)
 }

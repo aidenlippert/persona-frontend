@@ -25,7 +25,7 @@ const Header: React.FC<HeaderProps> = ({ mobileMenuOpen, setMobileMenuOpen }) =>
   const navigation = [
     { name: 'Dashboard', href: '/dashboard', icon: ShieldCheckIcon },
     { name: 'Credentials', href: '/credentials', icon: DocumentTextIcon },
-    { name: 'Issue Credential', href: '/issue', icon: DocumentTextIcon },
+    { name: 'Templates', href: '/templates', icon: DocumentTextIcon },
     { name: 'Generate Proof', href: '/generate', icon: FingerPrintIcon },
     { name: 'Verify', href: '/verify', icon: MagnifyingGlassIcon },
     { name: 'Show Proof', href: '/show-proof', icon: QrCodeIcon },

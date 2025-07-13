@@ -1,0 +1,62 @@
+{
+  "store": {
+    "name": "Retail Store",
+    "description": "Age verification for purchasing age-restricted items",
+    "requirements": ["proof-of-age"],
+    "icon": "🏪"
+  },
+  "bar": {
+    "name": "Bar/Restaurant",
+    "description": "Age verification for alcohol service",
+    "requirements": ["proof-of-age"],
+    "icon": "🍺"
+  },
+  "hotel": {
+    "name": "Hotel Check-in",
+    "description": "Identity and age verification for accommodation",
+    "requirements": ["proof-of-age", "location-proof"],
+    "icon": "🏨"
+  },
+  "doctor": {
+    "name": "Medical Appointment",
+    "description": "Identity and health credential verification",
+    "requirements": ["proof-of-age", "health-credential"],
+    "icon": "👩‍⚕️"
+  },
+  "bank": {
+    "name": "Bank Loan Application",
+    "description": "Identity, employment, and financial verification",
+    "requirements": ["proof-of-age", "employment-verification", "financial-status"],
+    "icon": "🏦"
+  },
+  "rental": {
+    "name": "Property Rental",
+    "description": "Income, employment, and background verification",
+    "requirements": ["employment-verification", "financial-status", "location-proof"],
+    "icon": "🏠"
+  },
+  "employer": {
+    "name": "Job Application",
+    "description": "Education and background verification",
+    "requirements": ["education-credential", "employment-verification"],
+    "icon": "💼"
+  },
+  "travel": {
+    "name": "Travel/Visa",
+    "description": "Health, financial, and location verification",
+    "requirements": ["health-credential", "financial-status", "location-proof"],
+    "icon": "✈️"
+  },
+  "graduate_school": {
+    "name": "Graduate School",
+    "description": "Academic credential verification",
+    "requirements": ["education-credential"],
+    "icon": "🎓"
+  },
+  "investment": {
+    "name": "Investment Platform",
+    "description": "Financial status and accreditation verification",
+    "requirements": ["financial-status", "employment-verification"],
+    "icon": "📈"
+  }
+}
